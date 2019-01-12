@@ -52,7 +52,7 @@ RUN mkdir -p /home/rust/libs /home/rust/src
 
 # Set up our path with all our binary directories, including those for the
 # musl-gcc toolchain and for our Rust toolchain.
-ENV PATH=/home/rust/.cargo/bin:/usr/local/musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=/home/rust/.cargo/bin:/home/rust/libs/musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Install our Rust toolchain and the `musl` target.  We patch the
 # command-line we pass to the installer so that it won't attempt to
@@ -77,16 +77,16 @@ RUN echo "Building OpenSSL" && \
     OPENSSL_VERSION=1.0.2o && \
     curl -LO "https://www.openssl.org/source/openssl-$OPENSSL_VERSION.tar.gz" && \
     tar xvzf "openssl-$OPENSSL_VERSION.tar.gz" && cd "openssl-$OPENSSL_VERSION" && \
-    env CC=musl-gcc ./Configure no-shared no-zlib -fPIC --prefix=/usr/local/musl linux-x86_64 && \
-    env C_INCLUDE_PATH=/usr/local/musl/include/ make depend && \
+    env CC=musl-gcc ./Configure no-shared no-zlib -fPIC --prefix=/home/rust/libs/musl linux-x86_64 && \
+    env C_INCLUDE_PATH=/home/rust/libs/musl/include/ make depend && \
     make && sudo make install && \
     \
     echo "Building zlib" && \
     cd /tmp && \
     ZLIB_VERSION=1.2.11 && \
-    curl -LO "http://zlib.net/zlib-$ZLIB_VERSION.tar.gz" && \
+    curl -LO "https://zlib.net/zlib-$ZLIB_VERSION.tar.gz" && \
     tar xzf "zlib-$ZLIB_VERSION.tar.gz" && cd "zlib-$ZLIB_VERSION" && \
-    CC=musl-gcc ./configure --static --prefix=/usr/local/musl && \
+    CC=musl-gcc ./configure --static --prefix=/home/rust/libs/musl && \
     make && sudo make install && \
     \
     echo "Building libpq" && \
@@ -94,16 +94,16 @@ RUN echo "Building OpenSSL" && \
     POSTGRESQL_VERSION=9.6.8 && \
     curl -LO "https://ftp.postgresql.org/pub/source/v$POSTGRESQL_VERSION/postgresql-$POSTGRESQL_VERSION.tar.gz" && \
     tar xzf "postgresql-$POSTGRESQL_VERSION.tar.gz" && cd "postgresql-$POSTGRESQL_VERSION" && \
-    CC=musl-gcc CPPFLAGS=-I/usr/local/musl/include LDFLAGS=-L/usr/local/musl/lib ./configure --with-openssl --without-readline --prefix=/usr/local/musl && \
+    CC=musl-gcc CPPFLAGS=-I/home/rust/libs/musl/include LDFLAGS=-L/home/rust/libs/musl/lib ./configure --with-openssl --without-readline --prefix=/home/rust/libs/musl && \
     cd src/interfaces/libpq && make all-static-lib && sudo make install-lib-static && \
     cd ../../bin/pg_config && make && sudo make install && \
     \
     rm -r /tmp/*
 
-ENV OPENSSL_DIR=/usr/local/musl/ \
-    OPENSSL_INCLUDE_DIR=/usr/local/musl/include/ \
-    DEP_OPENSSL_INCLUDE=/usr/local/musl/include/ \
-    OPENSSL_LIB_DIR=/usr/local/musl/lib/ \
+ENV OPENSSL_DIR=/home/rust/libs/musl/ \
+    OPENSSL_INCLUDE_DIR=/home/rust/libs/musl/include/ \
+    DEP_OPENSSL_INCLUDE=/home/rust/libs/musl/include/ \
+    OPENSSL_LIB_DIR=/home/rust/libs/musl/lib/ \
     OPENSSL_STATIC=1 \
     PQ_LIB_STATIC_X86_64_UNKNOWN_LINUX_MUSL=1 \
     PG_CONFIG_X86_64_UNKNOWN_LINUX_GNU=/usr/bin/pg_config \
